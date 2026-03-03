@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DA Status — My To-do</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23000000'/><path d='M16 5a7 7 0 0 0-4 12.8V20a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.2A7 7 0 0 0 16 5z' fill='%23f7e46a'/><rect x='13' y='22' width='6' height='1.5' rx='0.75' fill='%23f7e46a'/><rect x='13.5' y='24.5' width='5' height='1.5' rx='0.75' fill='%23f7e46a'/></svg>">
+<style>
+  :root {
+    --bg: #0f0f13;
+    --surface: #18181f;
+    --surface2: #22222c;
+    --surface3: #2a2a36;
+    --border: #2e2e3e;
+    --text: #e8e8f0;
+    --text-muted: #9494b4; /* was #7a7a9a ~4.4:1 → now ~6:1 on surface */
+    --text-dim: #8888b0;   /* was #4a4a6a ~2:1 → now ~5:1 on surface2 */
+    --accent: #7c6af7;
+    --accent-soft: rgba(124,106,247,0.12);
+    --p1: #f76a6a;
+    --p1-soft: rgba(247,106,106,0.12);
+    --p2: #f7a86a;
+    --p2-soft: rgba(247,168,106,0.12);
+    --p3: #6af7b8;
+    --p3-soft: rgba(106,247,184,0.12);
+    --done: #8888b0;       /* was #4a4a6a ~2:1 → now ~5:1 on surface2 */
+    --done-soft: rgba(136,136,176,0.15);
+    --action: #6ab4f7;
+    --action-soft: rgba(106,180,247,0.14);
+    --waiting: #f7e46a;
+    --waiting-soft: rgba(247,228,106,0.12);
+    --complete: #6af7b8;
+    --complete-soft: rgba(106,247,184,0.12);
+    --projects: #b46af7;
+    --team: #f76ab4;
+    --ai: #6af7f7;
+    --hiring: #f7c46a;
+  }
+
+  html.light {
+    --bg: #f4f4f8;
+    --surface: #ffffff;
+    --surface2: #f0f0f5;
+    --surface3: #e6e6ee;
+    --border: #dcdce8;
+    --text: #1a1a2e;
+    --text-muted: #595978; /* was #6868888 (invalid 7-char hex!) → ~7:1 on white */
+    --text-dim: #6a6a84;   /* was #b0b0c8 ~2.1:1 → now ~5:1 on white */
+    --accent: #6254e8;
+    --accent-soft: rgba(98,84,232,0.1);
+    --p1: #b52020;         /* was #d93636 ~4:1 on surface2 → now ~6.6:1 */
+    --p1-soft: rgba(181,32,32,0.1);
+    --p2: #8a5200;         /* was #c47a20 ~3.4:1 → now ~6.4:1 */
+    --p2-soft: rgba(138,82,0,0.1);
+    --p3: #1a7040;         /* was #1a9e6a ~3.4:1 → now ~5.4:1 */
+    --p3-soft: rgba(26,112,64,0.1);
+    --done: #5a5a78;       /* was #9090b0 ~3.1:1 → now ~6.5:1 */
+    --done-soft: rgba(90,90,120,0.12);
+    --action: #1c60bc;     /* was #2878d4 ~4.4:1 → now ~5.5:1 */
+    --action-soft: rgba(28,96,188,0.1);
+    --waiting: #7a5c00;    /* was #a07800 ~4.1:1 → now ~6.4:1 */
+    --waiting-soft: rgba(122,92,0,0.1);
+    --complete: #147850;   /* was #1a9e6a ~3.4:1 → now ~5.3:1 */
+    --complete-soft: rgba(20,120,80,0.1);
+    --projects: #7c3fd4;   /* ~6:1 on white ✓ */
+    --team: #c43080;       /* ~5.1:1 on white ✓ */
+    --ai: #0a6878;         /* was #1898a8 ~3.4:1 → now ~6:1 */
+    --hiring: #8a4a08;     /* was #b06010 borderline → now ~6.9:1 */
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 15px;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+  .header h1 span { color: var(--accent); }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+
+  /* ── Filters bar ── */
+  .filters {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 14px 28px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .filter-label { color: var(--text-muted); font-size: 13px; margin-right: 4px; }
+  .filter-btn {
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .filter-btn:hover { border-color: var(--accent); color: var(--text); }
+  .filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff !important; }
+
+  .search-wrap {
+    margin-left: auto;
+    position: relative;
+  }
+  .search-wrap input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 14px;
+    padding: 6px 12px 6px 32px;
+    width: 220px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .search-wrap input:focus { border-color: var(--accent); }
+  .search-wrap .search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+    font-size: 14px;
+  }
+
+  /* ── View toggle ── */
+  .view-toggle {
+    display: flex;
+    gap: 2px;
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 3px;
+  }
+  .view-btn {
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.15s;
+  }
+  .view-btn.active { background: var(--surface3); color: var(--text); }
+
+  /* ── Theme toggle ── */
+  .theme-toggle {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    width: 34px;
+    height: 34px;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .theme-toggle:hover { border-color: var(--accent); }
+
+  /* ── Add task button ── */
+  .add-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 7px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: opacity 0.15s;
+  }
+  .add-btn:hover { opacity: 0.85; }
+
+  /* ── Main layout ── */
+  .main { padding: 24px 28px; }
+
+  /* ── Stats strip ── */
+  .stats {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 18px;
+    flex: 1;
+    min-width: 100px;
+  }
+  .stat-card .val { font-size: 29px; font-weight: 700; line-height: 1; }
+  .stat-card .lbl { font-size: 12px; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* ── Board view ── */
+  .board {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    overflow-x: auto;
+    padding-bottom: 20px;
+  }
+  .board-col {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    width: 320px;
+    min-width: 320px;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .board-col-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .col-count {
+    background: var(--surface3);
+    color: var(--text-muted);
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+  .board-cards { padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+
+  /* ── List view ── */
+  .list-view { display: flex; flex-direction: column; gap: 8px; }
+  .list-section { margin-bottom: 8px; }
+  .list-section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0 6px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .list-section-header .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+  }
+  .list-section-header .section-count {
+    background: var(--surface2);
+    color: var(--text-muted);
+    font-size: 12px;
+    padding: 1px 7px;
+    border-radius: 20px;
+  }
+  .section-chevron { color: var(--text-dim); font-size: 12px; margin-left: auto; transition: transform 0.2s; }
+  .section-chevron.collapsed { transform: rotate(-90deg); }
+
+  /* ── Task card ── */
+  .task-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .task-card:hover { border-color: var(--accent); background: var(--surface3); transform: translateY(-1px); }
+  .task-card.done { opacity: 0.55; }
+  .task-card.done:hover { opacity: 0.75; }
+
+  .task-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .task-checkbox {
+    width: 17px;
+    height: 17px;
+    border-radius: 5px;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    margin-top: 1px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .task-checkbox.checked {
+    background: var(--complete);
+    border-color: var(--complete);
+    color: var(--bg);
+    font-size: 11px;
+  }
+  .task-title {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
+    flex: 1;
+  }
+  .task-title.strikethrough { text-decoration: line-through; color: var(--text-muted); }
+
+  .task-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+  .badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.3px;
+  }
+  .badge-p1 { background: var(--p1-soft); color: var(--p1); }
+  .badge-p2 { background: var(--p2-soft); color: var(--p2); }
+  .badge-p3 { background: var(--p3-soft); color: var(--p3); }
+  .badge-done { background: var(--done-soft); color: var(--done); }
+  .badge-action { background: var(--action-soft); color: var(--action); }
+  .badge-waiting { background: var(--waiting-soft); color: var(--waiting); }
+  .badge-complete { background: var(--complete-soft); color: var(--complete); }
+  .badge-projects { background: rgba(180,106,247,0.12); color: var(--projects); }
+  .badge-team { background: rgba(247,106,180,0.12); color: var(--team); }
+  .badge-ai { background: rgba(106,247,247,0.12); color: var(--ai); }
+  .badge-hiring { background: rgba(247,196,106,0.12); color: var(--hiring); }
+
+  .task-notes {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    white-space: pre-wrap;
+    display: none;
+  }
+  .task-notes.visible { display: block; }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 560px;
+    padding: 28px;
+    transform: translateY(16px);
+    transition: transform 0.2s;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .modal-title { font-size: 18px; font-weight: 700; }
+  .modal-close {
+    background: var(--surface2);
+    border: none;
+    color: var(--text-muted);
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .modal-close:hover { background: var(--surface3); color: var(--text); }
+
+  .form-row { margin-bottom: 16px; }
+  .form-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 14px;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+    font-family: inherit;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+  .form-select { appearance: none; cursor: pointer; }
+  .form-textarea { resize: vertical; min-height: 80px; }
+
+  .form-row-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+  .btn-ghost {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 8px;
+    padding: 8px 18px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--text); }
+  .btn-primary {
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    border-radius: 8px;
+    padding: 8px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-danger {
+    background: rgba(247,106,106,0.15);
+    border: none;
+    color: var(--p1);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    margin-right: auto;
+    transition: all 0.15s;
+  }
+  .btn-danger:hover { background: rgba(247,106,106,0.25); }
+
+  /* ── Priority color strip on cards ── */
+  .task-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 10px;
+    bottom: 10px;
+    width: 3px;
+    border-radius: 3px;
+  }
+  .task-card.pri-p1::before { background: var(--p1); }
+  .task-card.pri-p2::before { background: var(--p2); }
+  .task-card.pri-p3::before { background: var(--p3); }
+  .task-card.pri-done::before { background: var(--done); }
+
+  /* ── Empty state ── */
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+
+  /* ── Drag & Drop ── */
+  .task-card[draggable="true"] { cursor: grab; }
+  .task-card[draggable="true"]:active { cursor: grabbing; }
+  .task-card.dragging { opacity: 0.3; transform: scale(0.97); pointer-events: none; }
+  .task-card.drag-indicator-top { border-top: 2px solid var(--accent) !important; }
+  .task-card.drag-indicator-bottom { border-bottom: 2px solid var(--accent) !important; }
+  .cards-container.drag-active { background: var(--accent-soft); border-radius: 8px; outline: 1px dashed color-mix(in srgb, var(--accent) 50%, transparent); outline-offset: 3px; transition: background 0.1s; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <h1>DA Status <span>·</span> My To-do</h1>
+  <div class="header-right">
+    <div class="view-toggle">
+      <button class="view-btn active" id="btnList" onclick="setView('list')">≡ List</button>
+      <button class="view-btn" id="btnBoard" onclick="setView('board')">⊞ Board</button>
+    </div>
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark mode">🌙</button>
+    <button class="add-btn" onclick="openNewTaskModal()">+ Add Task</button>
+  </div>
+</header>
+
+<!-- Filters -->
+<div class="filters">
+  <span class="filter-label">Priority</span>
+  <button class="filter-btn active" onclick="toggleFilter('pri','all')">All</button>
+  <button class="filter-btn" onclick="toggleFilter('pri','P1')" style="border-color:rgba(247,106,106,0.4);color:var(--p1)">P1</button>
+  <button class="filter-btn" onclick="toggleFilter('pri','P2')" style="border-color:rgba(247,168,106,0.4);color:var(--p2)">P2</button>
+  <button class="filter-btn" onclick="toggleFilter('pri','P3')" style="border-color:rgba(106,247,184,0.4);color:var(--p3)">P3</button>
+
+  <div style="width:1px;height:20px;background:var(--border);margin:0 4px"></div>
+
+  <span class="filter-label">Status</span>
+  <button class="filter-btn" onclick="toggleFilter('status','Take Action')" style="color:var(--action)">Take Action</button>
+  <button class="filter-btn" onclick="toggleFilter('status','Awaiting Next Step')" style="color:var(--waiting)">Awaiting</button>
+  <button class="filter-btn" onclick="toggleFilter('status','Complete')" style="color:var(--complete)">Complete</button>
+
+  <div style="width:1px;height:20px;background:var(--border);margin:0 4px"></div>
+
+  <span class="filter-label">Category</span>
+  <button class="filter-btn" onclick="toggleFilter('cat','Projects')" style="color:var(--projects)">Projects</button>
+  <button class="filter-btn" onclick="toggleFilter('cat','Team')" style="color:var(--team)">Team</button>
+  <button class="filter-btn" onclick="toggleFilter('cat','AI')" style="color:var(--ai)">AI</button>
+  <button class="filter-btn" onclick="toggleFilter('cat','Hiring')" style="color:var(--hiring)">Hiring</button>
+
+  <div class="search-wrap">
+    <span class="search-icon">⌕</span>
+    <input type="text" id="searchInput" placeholder="Search tasks…" oninput="render()">
+  </div>
+</div>
+
+<!-- Main -->
+<main class="main">
+  <!-- Stats -->
+  <div class="stats" id="statsStrip"></div>
+  <!-- Content -->
+  <div id="content"></div>
+</main>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">New Task</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <form onsubmit="saveTask(event)">
+      <div class="form-row">
+        <label class="form-label">Task name</label>
+        <input type="text" class="form-input" id="fTitle" required placeholder="What needs to be done?">
+      </div>
+      <div class="form-row-grid">
+        <div class="form-row">
+          <label class="form-label">Priority</label>
+          <select class="form-select" id="fPriority">
+            <option value="P1">P1</option>
+            <option value="P2">P2</option>
+            <option value="P3">P3</option>
+            <option value="">—</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Status</label>
+          <select class="form-select" id="fStatus">
+            <option value="Take Action">Take Action</option>
+            <option value="Awaiting Next Step">Awaiting Next Step</option>
+            <option value="Complete">Complete</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Category</label>
+          <select class="form-select" id="fCategory">
+            <option value="">—</option>
+            <option value="Projects">Projects</option>
+            <option value="Team">Team</option>
+            <option value="AI">AI</option>
+            <option value="Hiring">Hiring</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Notes</label>
+        <textarea class="form-textarea" id="fNotes" placeholder="Additional context, blockers, next steps…"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-danger" id="btnDelete" onclick="deleteCurrentTask()" style="display:none">Delete</button>
+        <button type="button" class="btn-ghost" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn-primary" id="btnSave">Save Task</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// ──────────────────────────────────────────────
+// DATA
+// ──────────────────────────────────────────────
+let tasks = [
+  // P1 — Active
+  { id: 1, title: "MD Hub and Yield", priority: "P2", status: "Take Action", category: "Projects", notes: "Visability for Pali", done: false },
+  { id: 2, title: "Portabilidad", priority: "P1", status: "Take Action", category: "Projects", notes: "Check animations\nCheck sorteo", done: false },
+  { id: 3, title: "Smart Spending", priority: "P1", status: "Take Action", category: "Projects", notes: "Follow track. This needs to be on the Maxwell agenda\n\nPRD · Figma · Ejemplo PIX\n\nPatrón de UI\nGráficos (Define and bring to Gae)\nUse Cases · PPT Vita\n\nData driven. Push product. Casos de usos with data.\nContent is written based on size of audience.\nImpacts on the page structure · UI patterns.\nTry to understand which pattern is suitable for V1.\nGraphics: Rodri/Mauro can take graphics in parallel.", done: false },
+  { id: 4, title: "Cuenta Pro MLC", priority: "P1", status: "Take Action", category: "Projects", notes: "Check visual design", done: false },
+  { id: 5, title: "PORT Green Component", priority: "", status: "Take Action", category: "", notes: "Follow up with Ani.", done: false },
+  { id: 6, title: "Review and finish PR for team — one a week", priority: "P1", status: "Take Action", category: "Team", notes: "Saba · Mariu · Sil · Ju · Ale", done: false },
+  { id: 7, title: "POTS MLA", priority: "P1", status: "Take Action", category: "Projects", notes: "Follow up", done: false },
+  { id: 8, title: "Claude", priority: "P1", status: "Awaiting Next Step", category: "AI", notes: "Vis Studio Core issues", done: false },
+  { id: 9, title: "AI Avatars", priority: "P1", status: "Awaiting Next Step", category: "AI", notes: "Waiting for HO\nCheck on Guiones", done: false },
+  { id: 10, title: "MELI POT", priority: "P1", status: "Take Action", category: "Projects", notes: "Understand status and next steps.\nHow to build a story from ML to MP.\n\nIT can work differently.\nDifferent visual styles in ML and MP. Team needs to understand the difference and propose designs in Andes 2.\n\nFer needs to define where Meli Pot lives — in which touchpoints and the order in CHO.", done: false },
+  { id: 11, title: "Complete LinkedIn MELI course", priority: "P1", status: "Take Action", category: "Hiring", notes: "", done: false },
+  { id: 12, title: "Banco MLM", priority: "P1", status: "Take Action", category: "Projects", notes: "Who is owner in product and do we need more focals in BD (DA & Wallet)?", done: false },
+
+  // P2 — Active
+  { id: 13, title: "Map which CM is good at design and vice versa", priority: "P2", status: "Take Action", category: "Team", notes: "Talk to Pali/Luigi on how to do this", done: false },
+  { id: 14, title: "Transferencias Internacionales", priority: "P2", status: "Awaiting Next Step", category: "Projects", notes: "Are we going to add access to MLA transfers page? Pali have vis?", done: false },
+  { id: 15, title: "Cash", priority: "P2", status: "Take Action", category: "Projects", notes: "Follow up on UI designs", done: false },
+  { id: 16, title: "Pilot of role by Bá", priority: "P2", status: "Awaiting Next Step", category: "Team", notes: "Review deck (We want to launch for DIS too)", done: false },
+  { id: 17, title: "Handoff Standards", priority: "P2", status: "Take Action", category: "Projects", notes: "Talk to Pali and Luiz about how to improve this. Review deck from Lean.", done: false },
+  { id: 18, title: "AI Integration and UI design in chat", priority: "P2", status: "Awaiting Next Step", category: "AI", notes: "Meeting with Pali", done: false },
+
+  // P3 — Active
+  { id: 19, title: "How we present our work", priority: "P3", status: "Take Action", category: "Team", notes: "", done: false },
+  { id: 20, title: "Document rituals (casting for Q, Yearly planning, performance review)", priority: "P3", status: "Take Action", category: "Team", notes: "", done: false },
+
+  // DONE
+  { id: 21, title: "Leads to update Saba Doc + Status deck", priority: "P1", status: "Complete", category: "", notes: "", done: true },
+  { id: 22, title: "Talk with Rena, Nico & Fabi on mapping porotos de Maxwell in Q1", priority: "P1", status: "Complete", category: "Projects", notes: "Ask what are they mapping and what will the trade off be", done: true },
+  { id: 23, title: "Nico/Seba 'patrimonio' sync", priority: "P1", status: "Complete", category: "Projects", notes: "Next week meeting", done: true },
+  { id: 24, title: "Crypto Status (Check on Gus)", priority: "P1", status: "Complete", category: "", notes: "", done: true },
+  { id: 25, title: "Review Bruno case", priority: "P1", status: "Complete", category: "Team", notes: "", done: true },
+  { id: 26, title: "Create Q2 exercise in Figma", priority: "P1", status: "Complete", category: "Team", notes: "Figma", done: true },
+  { id: 27, title: "Cuenta Remunerada + Yield", priority: "P1", status: "Complete", category: "Projects", notes: "Talk to Paty.", done: true },
+  { id: 28, title: "Change of structure", priority: "P1", status: "Complete", category: "Team", notes: "Structure set. How do we communicate.", done: true },
+  { id: 29, title: "Mapa Cash — Not a track in Q1 for IT", priority: "P2", status: "Complete", category: "Team", notes: "IT is being a blocker. The team is still working in Nativo and after restyling needs to move to webview. This is a potential long term blocker. We can't begin to iterate on the map without an idea of needs from negocio.", done: true },
+  { id: 30, title: "Casting of spending and graphics", priority: "P1", status: "Complete", category: "Projects", notes: "Meeting 12/2 · Rodri", done: true },
+  { id: 31, title: "INV Planning (Ari presentation)", priority: "P1", status: "Complete", category: "Projects", notes: "", done: true },
+  { id: 32, title: "Menores MLC", priority: "P1", status: "Complete", category: "Projects", notes: "Fer is aligned on launching MLM first, then MLC. MLC in Q2. It should be scalable.", done: true },
+  { id: 33, title: "Aboves for Saba/Mariu", priority: "P1", status: "Complete", category: "Team", notes: "Heads up to Fer", done: true },
+  { id: 34, title: "Before/After 2025", priority: "P1", status: "Complete", category: "Projects", notes: "Create star and phone PNG", done: true },
+  { id: 35, title: "Cripto — Organisation, WOW and communicate to Pali", priority: "P1", status: "Complete", category: "Projects", notes: "", done: true },
+  { id: 36, title: "Understand message in #heads-cr-turbinada-pots", priority: "P1", status: "Complete", category: "Projects", notes: "", done: true },
+  { id: 37, title: "Banco MLM — Mariu to send a weekly recap to Pali/me", priority: "P2", status: "Awaiting Next Step", category: "Projects", notes: "Mariu will send recap", done: true },
+  { id: 38, title: "Review edge cases in new data dashboard", priority: "P2", status: "Complete", category: "Team", notes: "Ask Managers", done: true },
+  { id: 39, title: "Cash Out — Ask Rena/Fer to confirm with Vita", priority: "P1", status: "Complete", category: "Projects", notes: "Spoke to Fer. OK to advance.", done: true },
+  { id: 40, title: "Portabilidad x Ozzie", priority: "P1", status: "Complete", category: "Projects", notes: "Tell Fer the week we can't do it.", done: true },
+  { id: 41, title: "Equipo Cash Q1 only have Restyling in Porotaje", priority: "P2", status: "Complete", category: "Team", notes: "Which squad will take this in UX?", done: true },
+  { id: 42, title: "Complete Performance Review for Managers/Experts", priority: "P1", status: "Complete", category: "Team", notes: "", done: true },
+  { id: 43, title: "Nacho", priority: "P1", status: "Complete", category: "Team", notes: "Nacho needs to defend our cases, not let others defend.", done: true },
+  { id: 44, title: "Review Design Principles — Cash MLM fit", priority: "P2", status: "Complete", category: "Projects", notes: "Excel Presentation", done: true },
+  { id: 45, title: "Ari PPT", priority: "P1", status: "Complete", category: "Projects", notes: "", done: true },
+  { id: 46, title: "Push for feedback in Starmeup (Saba, Mariu)", priority: "P1", status: "Complete", category: "", notes: "", done: true },
+  { id: 47, title: "Check IDS in workforce and update Figma", priority: "P1", status: "Complete", category: "Team", notes: "", done: true },
+  { id: 48, title: "Check MILI message about access to data", priority: "P1", status: "Complete", category: "Team", notes: "", done: true },
+];
+
+let nextId = 49;
+
+// ──────────────────────────────────────────────
+// STATE
+// ──────────────────────────────────────────────
+let currentView = 'list';
+let filters = { pri: 'all', status: null, cat: null };
+let editingTaskId = null;
+let collapsedSections = {};
+let dragId = null;
+
+// ──────────────────────────────────────────────
+// FILTER LOGIC
+// ──────────────────────────────────────────────
+function toggleFilter(type, value) {
+  if (type === 'pri') {
+    filters.pri = value;
+    document.querySelectorAll('.filters .filter-btn').forEach(b => b.classList.remove('active'));
+    // re-activate matched button
+    document.querySelectorAll('.filters .filter-btn').forEach(b => {
+      if (b.textContent.trim() === (value === 'all' ? 'All' : value)) b.classList.add('active');
+    });
+  } else if (type === 'status') {
+    const label = value;
+    filters.status = filters.status === label ? null : label;
+    document.querySelectorAll('.filters .filter-btn').forEach(b => {
+      if (b.getAttribute('onclick') && b.getAttribute('onclick').includes(label)) {
+        b.classList.toggle('active', filters.status === label);
+      }
+    });
+  } else if (type === 'cat') {
+    filters.cat = filters.cat === value ? null : value;
+    document.querySelectorAll('.filters .filter-btn').forEach(b => {
+      if (b.getAttribute('onclick') && b.getAttribute('onclick').includes(`'cat','${value}'`)) {
+        b.classList.toggle('active', filters.cat === value);
+      }
+    });
+  }
+  render();
+}
+
+function getFiltered() {
+  const q = document.getElementById('searchInput')?.value.toLowerCase() || '';
+  return tasks.filter(t => {
+    if (filters.pri !== 'all' && t.priority !== filters.pri) return false;
+    if (filters.status && t.status !== filters.status && !(filters.status === 'Complete' && t.done)) return false;
+    if (filters.cat && t.category !== filters.cat) return false;
+    if (q && !t.title.toLowerCase().includes(q) && !t.notes.toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+
+// ──────────────────────────────────────────────
+// RENDER
+// ──────────────────────────────────────────────
+function setView(v) {
+  currentView = v;
+  document.getElementById('btnList').classList.toggle('active', v === 'list');
+  document.getElementById('btnBoard').classList.toggle('active', v === 'board');
+  render();
+}
+
+function render() {
+  renderStats();
+  if (currentView === 'list') renderList();
+  else renderBoard();
+}
+
+function renderStats() {
+  const active = tasks.filter(t => !t.done);
+  const done = tasks.filter(t => t.done);
+  const p1 = active.filter(t => t.priority === 'P1');
+  const waiting = active.filter(t => t.status === 'Awaiting Next Step');
+  const strip = document.getElementById('statsStrip');
+  strip.innerHTML = `
+    <div class="stat-card">
+      <div class="val">${active.length}</div>
+      <div class="lbl">Active tasks</div>
+    </div>
+    <div class="stat-card">
+      <div class="val" style="color:var(--p1)">${p1.length}</div>
+      <div class="lbl">P1 open</div>
+    </div>
+    <div class="stat-card">
+      <div class="val" style="color:var(--waiting)">${waiting.length}</div>
+      <div class="lbl">Awaiting</div>
+    </div>
+    <div class="stat-card">
+      <div class="val" style="color:var(--complete)">${done.length}</div>
+      <div class="lbl">Completed</div>
+    </div>
+  `;
+}
+
+function priorityOrder(p) {
+  return p === 'P1' ? 0 : p === 'P2' ? 1 : p === 'P3' ? 2 : 3;
+}
+
+function renderList() {
+  const filtered = getFiltered();
+  const content = document.getElementById('content');
+
+  // Group: active (by priority) + done
+  const groups = [
+    { key: 'P1', label: 'Priority 1', items: filtered.filter(t => !t.done && t.priority === 'P1'), color: 'var(--p1)' },
+    { key: 'P2', label: 'Priority 2', items: filtered.filter(t => !t.done && t.priority === 'P2'), color: 'var(--p2)' },
+    { key: 'P3', label: 'Priority 3', items: filtered.filter(t => !t.done && t.priority === 'P3'), color: 'var(--p3)' },
+    { key: 'other', label: 'No Priority', items: filtered.filter(t => !t.done && !t.priority), color: 'var(--text-dim)' },
+    { key: 'done', label: 'Done', items: filtered.filter(t => t.done), color: 'var(--done)' },
+  ].filter(g => g.items.length > 0);
+
+  content.innerHTML = `<div class="list-view">${groups.map(g => renderGroup(g)).join('')}</div>`;
+
+  // Attach events
+  content.querySelectorAll('.task-card').forEach(card => {
+    card.addEventListener('click', () => openEditModal(+card.dataset.id));
+  });
+  content.querySelectorAll('.task-checkbox').forEach(cb => {
+    cb.addEventListener('click', e => { e.stopPropagation(); toggleDone(+cb.dataset.id); });
+  });
+  content.querySelectorAll('.list-section-header').forEach(h => {
+    h.addEventListener('click', () => {
+      const key = h.dataset.key;
+      collapsedSections[key] = !collapsedSections[key];
+      render();
+    });
+  });
+  attachDrag();
+}
+
+function renderGroup(g) {
+  const collapsed = collapsedSections[g.key];
+  return `
+    <div class="list-section">
+      <div class="list-section-header" data-key="${g.key}">
+        <div style="width:8px;height:8px;border-radius:50%;background:${g.color};flex-shrink:0"></div>
+        <span class="section-title" style="color:${g.color}">${g.label}</span>
+        <span class="section-count">${g.items.length}</span>
+        <span class="section-chevron ${collapsed ? 'collapsed' : ''}">▾</span>
+      </div>
+      ${collapsed ? '' : `<div class="cards-container" data-group="${g.key}" style="display:flex;flex-direction:column;gap:6px">${g.items.map(renderTaskCard).join('')}</div>`}
+    </div>
+  `;
+}
+
+function renderBoard() {
+  const filtered = getFiltered();
+  const cols = [
+    { key: 'action', label: 'Take Action', color: 'var(--action)', items: filtered.filter(t => !t.done && t.status === 'Take Action') },
+    { key: 'waiting', label: 'Awaiting Next Step', color: 'var(--waiting)', items: filtered.filter(t => !t.done && t.status === 'Awaiting Next Step') },
+    { key: 'done', label: 'Done', color: 'var(--complete)', items: filtered.filter(t => t.done) },
+  ];
+
+  const content = document.getElementById('content');
+  content.innerHTML = `<div class="board">${cols.map(col => `
+    <div class="board-col">
+      <div class="board-col-header">
+        <span style="color:${col.color}">${col.label}</span>
+        <span class="col-count">${col.items.length}</span>
+      </div>
+      <div class="board-cards cards-container" data-col="${col.key}">
+        ${col.items.length ? col.items.map(renderTaskCard).join('') : `<div class="empty-state">No tasks</div>`}
+      </div>
+    </div>
+  `).join('')}</div>`;
+
+  content.querySelectorAll('.task-card').forEach(card => {
+    card.addEventListener('click', () => openEditModal(+card.dataset.id));
+  });
+  content.querySelectorAll('.task-checkbox').forEach(cb => {
+    cb.addEventListener('click', e => { e.stopPropagation(); toggleDone(+cb.dataset.id); });
+  });
+  attachDrag();
+}
+
+function renderTaskCard(t) {
+  const priClass = t.priority ? `pri-${t.priority.toLowerCase()}` : (t.done ? 'pri-done' : '');
+  const catBadge = t.category ? `<span class="badge badge-${t.category.toLowerCase()}">${t.category}</span>` : '';
+  const statusBadge = t.status === 'Take Action'
+    ? `<span class="badge badge-action">Take Action</span>`
+    : t.status === 'Awaiting Next Step'
+    ? `<span class="badge badge-waiting">Awaiting</span>`
+    : t.done ? `<span class="badge badge-complete">Done</span>` : '';
+  const priBadge = t.priority ? `<span class="badge badge-${t.priority.toLowerCase()}">${t.priority}</span>` : '';
+
+  return `
+    <div class="task-card ${priClass} ${t.done ? 'done' : ''}" data-id="${t.id}" draggable="true" style="padding-left:18px">
+      <div class="task-top">
+        <div class="task-checkbox ${t.done ? 'checked' : ''}" data-id="${t.id}">${t.done ? '✓' : ''}</div>
+        <span class="task-title ${t.done ? 'strikethrough' : ''}">${escHtml(t.title)}</span>
+      </div>
+      <div class="task-meta">
+        ${priBadge}${statusBadge}${catBadge}
+      </div>
+      ${t.notes ? `<div class="task-notes visible" style="margin-left:27px">${escHtml(t.notes.slice(0,120))}${t.notes.length > 120 ? '…' : ''}</div>` : ''}
+    </div>
+  `;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ──────────────────────────────────────────────
+// ACTIONS
+// ──────────────────────────────────────────────
+function toggleDone(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  t.done = !t.done;
+  if (t.done) t.status = 'Complete';
+  render();
+}
+
+function openNewTaskModal() {
+  editingTaskId = null;
+  document.getElementById('modalTitle').textContent = 'New Task';
+  document.getElementById('fTitle').value = '';
+  document.getElementById('fPriority').value = 'P1';
+  document.getElementById('fStatus').value = 'Take Action';
+  document.getElementById('fCategory').value = '';
+  document.getElementById('fNotes').value = '';
+  document.getElementById('btnDelete').style.display = 'none';
+  document.getElementById('btnSave').textContent = 'Add Task';
+  document.getElementById('modalOverlay').classList.add('open');
+  document.getElementById('fTitle').focus();
+}
+
+function openEditModal(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  editingTaskId = id;
+  document.getElementById('modalTitle').textContent = 'Edit Task';
+  document.getElementById('fTitle').value = t.title;
+  document.getElementById('fPriority').value = t.priority || '';
+  document.getElementById('fStatus').value = t.status || 'Take Action';
+  document.getElementById('fCategory').value = t.category || '';
+  document.getElementById('fNotes').value = t.notes || '';
+  document.getElementById('btnDelete').style.display = 'block';
+  document.getElementById('btnSave').textContent = 'Save Changes';
+  document.getElementById('modalOverlay').classList.add('open');
+  document.getElementById('fTitle').focus();
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+function saveTask(e) {
+  e.preventDefault();
+  const title = document.getElementById('fTitle').value.trim();
+  if (!title) return;
+  const data = {
+    title,
+    priority: document.getElementById('fPriority').value,
+    status: document.getElementById('fStatus').value,
+    category: document.getElementById('fCategory').value,
+    notes: document.getElementById('fNotes').value.trim(),
+    done: document.getElementById('fStatus').value === 'Complete',
+  };
+  if (editingTaskId) {
+    const t = tasks.find(x => x.id === editingTaskId);
+    Object.assign(t, data);
+  } else {
+    tasks.push({ id: nextId++, ...data });
+  }
+  closeModal();
+  render();
+}
+
+function deleteCurrentTask() {
+  if (!editingTaskId) return;
+  if (!confirm('Delete this task?')) return;
+  tasks = tasks.filter(t => t.id !== editingTaskId);
+  closeModal();
+  render();
+}
+
+// Keyboard shortcut: Escape closes modal, N opens new
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if (e.key === 'n' && !e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+    openNewTaskModal();
+  }
+});
+
+// ──────────────────────────────────────────────
+// DRAG & DROP
+// ──────────────────────────────────────────────
+function attachDrag() {
+  const content = document.getElementById('content');
+
+  content.querySelectorAll('.task-card[draggable]').forEach(card => {
+    card.addEventListener('dragstart', e => {
+      dragId = +card.dataset.id;
+      e.dataTransfer.effectAllowed = 'move';
+      setTimeout(() => card.classList.add('dragging'), 0);
+    });
+
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+      clearDragIndicators();
+      dragId = null;
+    });
+
+    card.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!dragId || dragId === +card.dataset.id) return;
+      clearDragIndicators();
+      const rect = card.getBoundingClientRect();
+      card.classList.add(e.clientY < rect.top + rect.height / 2 ? 'drag-indicator-top' : 'drag-indicator-bottom');
+    });
+
+    card.addEventListener('drop', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!dragId || dragId === +card.dataset.id) return;
+      const pos = card.classList.contains('drag-indicator-top') ? 'before' : 'after';
+      clearDragIndicators();
+      dropOnCard(dragId, +card.dataset.id, pos);
+    });
+  });
+
+  content.querySelectorAll('.cards-container').forEach(zone => {
+    zone.addEventListener('dragover', e => {
+      e.preventDefault();
+      zone.classList.add('drag-active');
+    });
+
+    zone.addEventListener('dragleave', e => {
+      if (!zone.contains(e.relatedTarget)) zone.classList.remove('drag-active');
+    });
+
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.classList.remove('drag-active');
+      if (!dragId) return;
+      const key = zone.dataset.group || zone.dataset.col;
+      if (key) dropOnZone(dragId, key);
+    });
+  });
+}
+
+function clearDragIndicators() {
+  document.querySelectorAll('.drag-indicator-top, .drag-indicator-bottom, .drag-active').forEach(el => {
+    el.classList.remove('drag-indicator-top', 'drag-indicator-bottom', 'drag-active');
+  });
+}
+
+function dropOnCard(fromId, toId, position) {
+  const from = tasks.find(t => t.id === fromId);
+  const to = tasks.find(t => t.id === toId);
+  if (!from || !to) return;
+  applyGroupOf(from, to);
+  const fromIdx = tasks.findIndex(t => t.id === fromId);
+  tasks.splice(fromIdx, 1);
+  const toIdx = tasks.findIndex(t => t.id === toId);
+  tasks.splice(position === 'before' ? toIdx : toIdx + 1, 0, from);
+  render();
+}
+
+function dropOnZone(fromId, key) {
+  const from = tasks.find(t => t.id === fromId);
+  if (!from) return;
+  applyGroupKey(from, key);
+  render();
+}
+
+function applyGroupOf(dragged, target) {
+  if (currentView === 'list') {
+    dragged.priority = target.priority;
+    if (target.done) {
+      dragged.done = true;
+      dragged.status = 'Complete';
+    } else {
+      dragged.done = false;
+      if (dragged.status === 'Complete') dragged.status = 'Take Action';
+    }
+  } else {
+    dragged.status = target.status;
+    dragged.done = target.done;
+  }
+}
+
+function applyGroupKey(dragged, key) {
+  switch (key) {
+    case 'P1': dragged.priority = 'P1'; dragged.done = false; if (dragged.status === 'Complete') dragged.status = 'Take Action'; break;
+    case 'P2': dragged.priority = 'P2'; dragged.done = false; if (dragged.status === 'Complete') dragged.status = 'Take Action'; break;
+    case 'P3': dragged.priority = 'P3'; dragged.done = false; if (dragged.status === 'Complete') dragged.status = 'Take Action'; break;
+    case 'other': dragged.priority = ''; dragged.done = false; if (dragged.status === 'Complete') dragged.status = 'Take Action'; break;
+    case 'done': dragged.done = true; dragged.status = 'Complete'; break;
+    case 'action': dragged.status = 'Take Action'; dragged.done = false; break;
+    case 'waiting': dragged.status = 'Awaiting Next Step'; dragged.done = false; break;
+  }
+}
+
+// ──────────────────────────────────────────────
+// THEME
+// ──────────────────────────────────────────────
+function toggleTheme() {
+  const isLight = document.documentElement.classList.toggle('light');
+  document.getElementById('themeToggle').textContent = isLight ? '🌑' : '🌙';
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+}
+
+// ──────────────────────────────────────────────
+// INIT
+// ──────────────────────────────────────────────
+if (localStorage.getItem('theme') === 'light') {
+  document.documentElement.classList.add('light');
+  document.getElementById('themeToggle').textContent = '🌑';
+}
+render();
+</script>
+</body>
+</html>
